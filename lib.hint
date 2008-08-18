@@ -1,0 +1,7 @@
+category: Graphics
+requires: cygwin libfontconfig1 libiconv2 libjasper1 libjpeg62 libpng12 libX11_6 libXt6 zlib
+external-source: ghostscript-x11
+sdesc: "PostScript language interpreter library (runtime)"
+ldesc: "GNU Ghostscript is Postscript interpreter capable of converting PS
+files into a number of printer output formats.  Ghostscript can also
+render PS files into a number of graphics file formats."

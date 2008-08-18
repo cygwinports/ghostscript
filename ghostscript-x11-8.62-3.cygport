@@ -1,0 +1,94 @@
+ORIG_PN="ghostscript"
+GENTOO_PN="ghostscript-gpl"
+
+DESCRIPTION="GPL PostScript interpreter"
+HOMEPAGE="http://ghostscript.com/"
+SRC_URI="mirror://sourceforge/ghostscript/${ORIG_PN}-${PV}.tar.bz2
+         mirror://gentoo/${GENTOO_PN}-${PV}-patchset-1.tar.bz2"
+PATCH_URI="8.63-vpath.patch"
+
+abi=8
+PKG_NAMES="${PN} libgs${abi} libgs-devel"
+PKG_HINTS="x11 lib devel"
+PKG_CONTENTS[0]="etc/ usr/bin/gs-x11.exe usr/share/"
+PKG_CONTENTS[1]="usr/bin/cyggs-${abi}.dll"
+PKG_CONTENTS[2]="usr/include/ usr/lib/"
+
+DISTCLEANFILES="cups/pstopxl cups/pstoraster"
+
+CYGPORT_USE_UNSTABLE_API=1
+
+src_unpack_hook() {
+	rm -fr expat/ jasper/ jpeg/ libpng/ zlib/
+	cygpatch ../patches/${GENTOO_PN}-8.60-fPIC.patch
+	cygpatch ../patches/${GENTOO_PN}-8.61-multilib.patch
+	cygpatch ../patches/${GENTOO_PN}-8.60-noopt.patch
+	cygpatch ../patches/${GENTOO_PN}-8.60-scripts.patch
+	cygpatch ../patches/${GENTOO_PN}-8.62-system-jasper.patch
+	cygpatch ../patches/${GENTOO_PN}-8.61-rinkj.patch
+#	cygpatch ../patches/${GENTOO_PN}-8.62-pksmraw.patch
+#	cygpatch ../patches/${GENTOO_PN}-8.63-cairo-automagic.patch
+}
+
+src_compile() {
+	cd ${S}
+	cygautoreconf
+
+	cd ${B}
+	cygconf \
+		--enable-fontconfig \
+		--with-drivers=ALL \
+		--with-fontpath=/usr/share/${ORIG_PN}/fonts:/usr/share/fonts/TTF:/usr/share/fonts/Type1 \
+		--with-ijs \
+		--with-jasper \
+		--with-jbig2dec \
+		--with-x \
+		--disable-compile-inits \
+		--disable-cups \
+		--disable-gtk
+#		--enable-cairo \
+
+	cygmake -j1 so \
+		GLSRCDIR=${S}/src \
+		PSSRCDIR=${S}/src \
+		PSLIBDIR=${S}/lib \
+		CONTRIBDIR=${S}/contrib \
+		ICCSRCDIR=${S}/icclib \
+		IJSSRCDIR=${S}/ijs \
+		IMDISRCDIR=${S}/imdi \
+		JBIG2SRCDIR=${S}/jbig2dec \
+		GS=gs \
+		GS_SONAME='libgs-$(GS_VERSION_MAJOR).dll.a' \
+		GS_SONAME_MAJOR='libgs-$(GS_VERSION_MAJOR).dll.a' \
+		GS_SONAME_MAJOR_MINOR='cyggs-$(GS_VERSION_MAJOR).dll' \
+		LDFLAGS_SO='-shared -Wl,--out-implib,sobin/libgs.dll.a'
+}
+
+src_install() {
+	cd ${B}
+	cygmake install-so \
+		DESTDIR=${D} \
+		docdir=/usr/share/doc/${P} \
+		GLSRCDIR=${S}/src \
+		PSSRCDIR=${S}/src \
+		PSLIBDIR=${S}/lib \
+		CONTRIBDIR=${S}/contrib \
+		ICCSRCDIR=${S}/icclib \
+		IJSSRCDIR=${S}/ijs \
+		IMDISRCDIR=${S}/imdi \
+		JBIG2SRCDIR=${S}/jbig2dec \
+		GS=gs \
+		GS_SONAME='libgs-$(GS_VERSION_MAJOR).dll.a' \
+		GS_SONAME_MAJOR='libgs-$(GS_VERSION_MAJOR).dll.a' \
+		GS_SONAME_MAJOR_MINOR='cyggs-$(GS_VERSION_MAJOR).dll'
+
+#	mv ${D}/usr/bin/gs{c,}.exe
+#	dosym /usr/bin/gs.exe /usr/bin/gs-native
+#	dosym /usr/bin/gs.exe /usr/bin/gs-x11
+	mv ${D}/usr/bin/gs{c,-x11}.exe
+	rm -f ${D}/usr/bin/gsx.exe
+
+	mv ${D}/usr/lib/*.dll ${D}/usr/bin
+	rm ${D}/usr/lib/*.a
+	dolib ${B}/sobin/libgs.dll.a
+}

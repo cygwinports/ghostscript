@@ -1,0 +1,6 @@
+category: Graphics
+requires: cygwin libgs8
+sdesc: "An interpreter for the PostScript language and for PDF - (X11 version)"
+ldesc: "GNU Ghostscript is Postscript interpreter capable of converting PS
+files into a number of printer output formats.  Ghostscript can also
+render PS files into a number of graphics file formats."
